@@ -30,7 +30,7 @@ import (
 
 //function CREATE
 /* save the part of gw creation and mac learning for future requirment, comment the related code now*/
-func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack_num uint32, aca_per_rack uint32, cgw_num uint32, data_plane_cidr string, ports_per_vswitch uint32, images []*pb.InternalTopologyImage, aca_parameters string, returnMessage *pb.ReturnTopologyMessage, topoPrefix string, namespace string) error {
+func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack_num uint32, aca_per_rack uint32, cgw_num uint32, data_plane_cidr string, ports_per_vswitch uint32, images []*pb.InternalTopologyImage, service_config []*pb_common.InternalServiceInfo, returnMessage *pb.ReturnTopologyMessage, topoPrefix string, namespace string) error {
 
 	start_time := time.Now()
 
@@ -201,7 +201,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 		utils.Logger.Info("request DEPLOY", "create k8s cluster namespace for new topology deployment", namespace)
 	}
 
-	go Topo_deploy(k8client, aca_image, ovs_image, topo, aca_parameters, topoPrefix, namespace)
+	go Topo_deploy(k8client, aca_image, ovs_image, topo, service_config, topoPrefix, namespace)
 
 	elaps2 := time.Since(start1)
 

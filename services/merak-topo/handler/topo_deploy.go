@@ -19,6 +19,7 @@ import (
 	"strings"
 	"time"
 
+	pb_common "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 
@@ -98,7 +99,7 @@ func NewTopologyClass(name string, links []database.Vlink, namespace string) *un
 	return out
 }
 
-func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image string, topo database.TopologyData, aca_parameters string, topoPrefix string, namespace string) error {
+func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image string, topo database.TopologyData, service_config []*pb_common.InternalServiceInfo, topoPrefix string, namespace string) error {
 	/*comment gw creation function*/
 	// var k8snodes []string
 
@@ -114,6 +115,12 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 	var vhost_pods_config []*corev1.Pod
 	var rack_pods_config []*corev1.Pod
 	var vs_pods_config []*corev1.Pod
+
+	// var acaparam []string
+	// for _,serv := range service_config{
+	// 	s = string(serv.OperationType) + "," + string(serv.Id) + "," + string(serv.Name) + "," + string(serv.Cmd) + "," + string(serv.Url) + "," + string(serv.Parameters[0])
+
+	// }
 
 	start_time := time.Now()
 
@@ -142,7 +149,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 		var grace_period = int64(0)
 
-		//// create pods
+		//create pods
 		var newPod *corev1.Pod
 		l := make(map[string]string)
 		l["App"] = node.Name
@@ -191,7 +198,8 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 							Name:            "vhost",
 							Image:           aca_image,
 							ImagePullPolicy: "Always",
-							Command:         []string{"/bin/sh", "-c", "/merak-bin/merak-agent " + aca_parameters},
+							// Command:         []string{"/bin/sh", "-c", "/merak-bin/merak-agent " + aca_parameters},
+							Command:         []string{},
 							SecurityContext: &sc,
 							Ports: []corev1.ContainerPort{
 								{ContainerPort: constants.AGENT_GRPC_SERVER_PORT},

@@ -17,7 +17,6 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"strings"
 
 	pb_common "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
@@ -38,7 +37,7 @@ type Server struct {
 func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInfo) (*pb.ReturnTopologyMessage, error) {
 	var returnMessage pb.ReturnTopologyMessage
 	errs := errors.New("merak-topo can't handle this request")
-	
+
 	topoPrefix := in.Config.GetTopologyId()[:5]
 
 	/*comment: create topology in the default namespace*/
@@ -70,15 +69,15 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 				utils.Logger.Info("topology information is not ready yet", in.Config.GetTopologyId(), err_info.Error())
 				returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 				returnMessage.ReturnMessage = "CHECK fail."
-				return &returnMessage,err_info
-				
+				return &returnMessage, err_info
+
 			} else {
 				returnMessage.ReturnCode = pb_common.ReturnCode_OK
 				returnMessage.ReturnMessage = "CHECK success."
 			}
 
 			utils.Logger.Debug("requrest CHECK details", "return code", returnMessage.ReturnCode, "return compute node", returnMessage.ComputeNodes, "return host node", returnMessage.Hosts)
-			
+
 		}
 
 	case pb_common.OperationType_CREATE:
@@ -94,23 +93,23 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 
 		ports_per_vswitch := in.Config.GetPortsPerVswitch()
 
-		aca_parameters := ""
+		// aca_parameters := ""
 		service_config := in.Config.GetServices()
-		for _, service := range service_config {
-			if service.Name == "aca-cmd" {
-				aca_ip := ""
-				aca_port := ""
-				for _, par := range service.Parameters {
-					words := strings.Fields(par)
-					if words[0] == "-a" {
-						aca_ip = words[1]
-					} else if words[0] == "-p" {
-						aca_port = words[1]
-					}
-				}
-				aca_parameters = aca_ip + " " + aca_port
-			}
-		}
+		// for _, service := range service_config {
+		// 	if service.Name == "aca-cmd" {
+		// 		aca_ip := ""
+		// 		aca_port := ""
+		// 		for _, par := range service.Parameters {
+		// 			words := strings.Fields(par)
+		// 			if words[0] == "-a" {
+		// 				aca_ip = words[1]
+		// 			} else if words[0] == "-p" {
+		// 				aca_port = words[1]
+		// 			}
+		// 		}
+		// 		aca_parameters = aca_ip + " " + aca_port
+		// 	}
+		// }
 
 		if data_plane_cidr == "" || aca_num == 0 || aca_per_rack == 0 || rack_num == 0 || ports_per_vswitch == 0 {
 
@@ -136,14 +135,14 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			//
 		default:
 			// pb.TopologyType_TREE
-			err_create := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, uint32(ports_per_vswitch), images, aca_parameters, &returnMessage, topoPrefix, namespace)
+			err_create := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, uint32(ports_per_vswitch), images, service_config, &returnMessage, topoPrefix, namespace)
 
 			if err_create != nil {
 				utils.Logger.Error("can't deploy topology", topo_id, err_create.Error())
 				returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 				returnMessage.ReturnMessage = "DEPLOY fail."
 				return &returnMessage, err_create
-				
+
 			} else {
 				utils.Logger.Info("request DEPLOY", topo_id, "success")
 				returnMessage.ReturnCode = pb_common.ReturnCode_OK
@@ -162,7 +161,7 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 
 		if err != nil {
 			utils.Logger.Error("request DELETE", in.Config.TopologyId, err.Error())
-			
+
 			returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 			returnMessage.ReturnMessage = "DELETE fail"
 			utils.Logger.Debug("request DELETE", "return message", returnMessage.ReturnMessage, "return code", returnMessage.ReturnCode)
@@ -173,9 +172,6 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			returnMessage.ReturnMessage = "DELETE success"
 			utils.Logger.Debug("request DELETE", "return message", returnMessage.ReturnMessage, "return code", returnMessage.ReturnCode)
 		}
-
-		
-		
 
 	case pb_common.OperationType_UPDATE:
 		// update topology
