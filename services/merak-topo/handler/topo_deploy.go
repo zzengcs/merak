@@ -116,11 +116,13 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 	var rack_pods_config []*corev1.Pod
 	var vs_pods_config []*corev1.Pod
 
-	// var acaparam []string
-	// for _,serv := range service_config{
-	// 	s = string(serv.OperationType) + "," + string(serv.Id) + "," + string(serv.Name) + "," + string(serv.Cmd) + "," + string(serv.Url) + "," + string(serv.Parameters[0])
-
-	// }
+	var acaparam []string
+	for _, serv := range service_config {
+		s := string(serv.OperationType) + "," + string(serv.Id) + "," + string(serv.Name) + "," + string(serv.Cmd) + "," + string(serv.Url)
+		for _, para := range serv.Parameters {
+			s = s + "," + string(para)
+		}
+	}
 
 	start_time := time.Now()
 
@@ -199,7 +201,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 							Image:           aca_image,
 							ImagePullPolicy: "Always",
 							// Command:         []string{"/bin/sh", "-c", "/merak-bin/merak-agent " + aca_parameters},
-							Command:         []string{},
+							Command:         acaparam,
 							SecurityContext: &sc,
 							Ports: []corev1.ContainerPort{
 								{ContainerPort: constants.AGENT_GRPC_SERVER_PORT},
